@@ -8,19 +8,20 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_credentials") // DBのテーブル名と一致させる
+@Table(name = "user_credentials")
 @Getter
-@Setter // JPAにはSetterが必要（Lombok使用を想定）
+@Setter
 public class UserCredentials {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Embedded
+    private Email email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    @Embedded
+    private Password password;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

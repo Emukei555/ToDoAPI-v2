@@ -5,7 +5,7 @@ import com.sqlcanvas.todoapi.user.domain.User;
 public record UserResponse(
         Long id,
         String name,
-        String email,      // Value ObjectではなくStringにする
+        com.sqlcanvas.todoapi.user.domain.Email email,      // Value ObjectではなくStringにする
         String rankName,   // Rankオブジェクトではなく、ランク名だけ返す
         java.math.BigDecimal discountRate   // 割引率も便利なので返してあげる
 ) {

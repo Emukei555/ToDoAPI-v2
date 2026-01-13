@@ -17,27 +17,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserCredentialsRepository userCredentialsRepository;
-    private final UserRepository userRepository; // User情報も必要なら残す
+    private final UserRepository userRepository;
 
+    // ★ポイント: Overrideするメソッドの引数は必ず「String」でなければなりません
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String emailStr) throws UsernameNotFoundException {
 
-        // 1. まず認証テーブル(UserCredentials)からメールで検索
+        // 1. 入ってきた String を、ここで Email Value Object に変換します
+        // バリデーションエラーならここで例外が出て安全に弾かれます
+        Email email;
+        try {
+            email = new Email(emailStr);
+        } catch (IllegalArgumentException e) {
+            throw new UsernameNotFoundException("無効なメールアドレス形式です: " + emailStr);
+        }
+
+        // 2. Emailオブジェクトを使ってDB検索
         UserCredentials credentials = userCredentialsRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません: " + emailStr));
 
-        // 2. Userテーブルの情報が必要なら、CredentialsからUserを取得できる
-        // (UserCredentials側にUserへの参照がない場合は、UserRepositoryで検索する)
-        // 今回の設計では User -> Credentials という方向なので、
-        // 逆に Credentials から User を探すには UserRepository で検索が必要かもしれません。
-
-        // もし UserCredentials 側に @OneToOne(mappedBy = "credentials") User user; があれば
-        // credentials.getUser() で取れますが、なければ以下のように探します。
+        // 3. プロフィール情報を取得して返す
         User user = userRepository.findByCredentials_Id(credentials.getId())
                 .orElseThrow(() -> new UsernameNotFoundException("プロフィール情報が見つかりません"));
 
-        // 3. CustomUserDetails を返す
         return new CustomUserDetails(user);
     }
 }

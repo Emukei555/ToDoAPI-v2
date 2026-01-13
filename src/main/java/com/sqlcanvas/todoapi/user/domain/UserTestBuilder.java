@@ -11,6 +11,7 @@ public class UserTestBuilder {
     private String password = "defaultPassword";
     private Rank rank = new Rank(1L, "REGULAR", "通常", BigDecimal.ZERO);
 
+
     // 2. スタティックファクトリメソッド（開始の合図）
     public static UserTestBuilder aUser() {
         return new UserTestBuilder();
@@ -41,12 +42,11 @@ public class UserTestBuilder {
 
         // 2. 認証情報(Credentials)を作成
         UserCredentials credentials = new UserCredentials();
-        credentials.setEmail(this.email.getValue()); // Email型を使っている場合
-        credentials.setPasswordHash(this.password);
+        credentials.setIsActive(true);
+        credentials.setEmail(this.email);
+        credentials.setPassword(new Password(this.password));
         credentials.setIsActive(true);
 
-        // 3. 新しいUserコンストラクタを使用
-        // User(String name, UserCredentials credentials, Rank rank)
         return new User(this.name, credentials, this.rank);
     }
 }

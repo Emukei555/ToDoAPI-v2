@@ -23,14 +23,12 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        // User -> Credentials -> Email
-        return user.getCredentials().getEmail();
+        return user.getCredentials().getEmail().getValue();
     }
 
     @Override
     public String getPassword() {
-        // User -> Credentials -> PasswordHash
-        return user.getCredentials().getPasswordHash();
+        return user.getCredentials().getPassword().getValue();
     }
 
     // --- 以下、UserDetailsの必須メソッド ---

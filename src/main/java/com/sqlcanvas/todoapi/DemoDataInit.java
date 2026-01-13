@@ -1,5 +1,7 @@
 package com.sqlcanvas.todoapi;
 
+import com.sqlcanvas.todoapi.user.domain.Email;
+import com.sqlcanvas.todoapi.user.domain.Password; // 追加
 import com.sqlcanvas.todoapi.user.domain.Rank;
 import com.sqlcanvas.todoapi.user.domain.User;
 import com.sqlcanvas.todoapi.user.domain.UserCredentials;
@@ -22,22 +24,20 @@ import java.util.Optional;
 public class DemoDataInit implements CommandLineRunner {
 
     private final UserRepository userRepository;
-    private final UserCredentialsRepository userCredentialsRepository; // 追加
+    private final UserCredentialsRepository userCredentialsRepository;
     private final RankRepository rankRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional // 複数のテーブルを更新するのでトランザクションをかける
+    @Transactional
     public void run(String... args) throws Exception {
 
         // --- 1. ランクマスタの取得または作成 ---
-        // ID(数値)ではなく、name(文字列)で検索します
         Rank gold = rankRepository.findByName("GOLD").orElseGet(() -> {
             Rank r = new Rank();
             r.setName("GOLD");
             r.setDisplayName("ゴールド会員");
-            r.setDiscountRate(new BigDecimal("0.10")); // 10%
-            // r.setDescription("..."); // 必要ならセット
+            r.setDiscountRate(new BigDecimal("0.10"));
             return rankRepository.save(r);
         });
 
@@ -50,40 +50,39 @@ public class DemoDataInit implements CommandLineRunner {
         });
 
         // --- 2. ユーザーの登録 ---
-        // Emailの重複チェックは UserCredentials テーブルに対して行う
-        String emailTaro = "taro@example.com";
+
+        // ★修正ポイント: 文字列ではなく Email オブジェクトを作る
+        Email emailTaro = new Email("taro@example.com");
+
+        // ★修正ポイント: リポジトリも Email オブジェクトで検索する
         Optional<UserCredentials> existingCredTaro = userCredentialsRepository.findByEmail(emailTaro);
 
         if (existingCredTaro.isEmpty()) {
-            // Step A: まず認証情報を作る
             UserCredentials cred = new UserCredentials();
+            // ★修正ポイント: Setterには Email オブジェクトを渡す
             cred.setEmail(emailTaro);
-            cred.setPasswordHash(passwordEncoder.encode("password"));
+
+            // ★修正ポイント: Password オブジェクトでラップし、setPasswordを使う
+            cred.setPassword(new Password(passwordEncoder.encode("password")));
+
             cred.setIsActive(true);
-            // ※ここで cred を save() するかは CascadeType.ALL の設定次第ですが、
-            //   Userと一緒に保存される設定ならここでは save 不要です。
 
-            // Step B: Userを作る (CredentialsとRankを渡す)
-            // コンストラクタ: User(String name, UserCredentials credentials, Rank rankEntity)
             User user1 = new User("テスト太郎", cred, gold);
-
-            // ★古い Enum の setRank は削除します（Rankエンティティがあれば十分）
-
             userRepository.save(user1);
             log.info("初期ユーザー(太郎)を登録しました: Rank=GOLD");
         }
 
-        String emailJiro = "jiro@example.com";
+        // 次郎も同様に修正
+        Email emailJiro = new Email("jiro@example.com"); // StringからEmailへ
         Optional<UserCredentials> existingCredJiro = userCredentialsRepository.findByEmail(emailJiro);
 
         if (existingCredJiro.isEmpty()) {
             UserCredentials cred = new UserCredentials();
             cred.setEmail(emailJiro);
-            cred.setPasswordHash(passwordEncoder.encode("password"));
+            cred.setPassword(new Password(passwordEncoder.encode("password")));
             cred.setIsActive(true);
 
             User user2 = new User("テスト次郎", cred, bronze);
-
             userRepository.save(user2);
             log.info("初期ユーザー(次郎)を登録しました: Rank=BRONZE");
         }
