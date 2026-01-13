@@ -1,0 +1,16 @@
+services:
+  # サービス名: postgres
+  postgres:
+    image: postgres:16-alpine
+    container_name: todo_postgres
+    environment:
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres         # DB名
+    ports:
+      - "5432:5432"                 # ポート転送
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
